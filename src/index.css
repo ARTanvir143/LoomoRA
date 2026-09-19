@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #ffffff;
+    color: #222222;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Custom scrollbar for a premium look */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background-color: #F8FAFC;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+  }
+}
+
+@layer components {
+  .app-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full;
+  }
+
+  .btn-primary {
+    @apply bg-[#0F172A] text-white px-6 py-3 rounded-md font-medium hover:bg-blue-600 transition-colors duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-outline {
+    @apply border-2 border-[#0F172A] text-[#0F172A] px-6 py-3 rounded-md font-medium hover:bg-[#0F172A] hover:text-white transition-colors duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+}
+
+/* ==========================================
+   Jodit Rich Text Editor Premium Styling
+   ========================================== */
+.prose-editor .jodit-container {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 0.75rem !important; /* Tailwind rounded-xl */
+  overflow: hidden !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  transition: all 0.2s ease;
+}
+
+.prose-editor .jodit-container:focus-within {
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+}
+
+.prose-editor .jodit-toolbar__box {
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.prose-editor .jodit-workplace {
+  background-color: #ffffff !important;
+  min-height: 250px !important;
+}
+
+/* Hide the Jodit branding footer for a cleaner look */
+.prose-editor .jodit-status-bar {
+  display: none !important;
+}
