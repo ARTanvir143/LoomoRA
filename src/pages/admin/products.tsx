@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import { 
   LayoutDashboard, Package, ShoppingBag, Users, Menu, X, Tags, Settings, FileText,
@@ -20,7 +19,6 @@ interface Product {
 }
 
 const AdminProducts = () => {
-  const { user } = useAuthStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const [products, setProducts] = useState<Product[]>([]);

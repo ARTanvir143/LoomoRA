@@ -3,11 +3,10 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { useAuthStore } from '../../store/authStore';
 import { uploadImageToCloudinary } from '../../services/cloudinary/upload';
 import toast from 'react-hot-toast';
 import { 
-  LayoutDashboard, Package, ShoppingBag, Users, Menu, X, Tags, Settings, FileText,
+  LayoutDashboard, Package, ShoppingBag, Menu, X, Tags,
   UploadCloud, Loader2, Trash2, Box, Image as ImageIcon, Edit2, DownloadCloud
 } from 'lucide-react';
 
@@ -30,7 +29,6 @@ const defaultCategoriesData = [
 ];
 
 const ManageCategories = () => {
-  const { user } = useAuthStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const [categories, setCategories] = useState<Category[]>([]);
