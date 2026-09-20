@@ -7,7 +7,7 @@ import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import { 
   LayoutDashboard, Package, ShoppingBag, Users, Menu, X, Tags, Settings, FileText,
-  Search, Loader2, Filter, ChevronDown, CheckCircle, Clock, Truck, Eye
+  Search, Loader2, Filter, ChevronDown, Eye
 } from 'lucide-react';
 
 interface OrderItem {
@@ -26,6 +26,7 @@ interface CustomerDetails {
   phone: string;
   address: string;
   city: string;
+  state?: string; // এখানে '?' যুক্ত করা হয়েছে
   zipCode: string;
 }
 

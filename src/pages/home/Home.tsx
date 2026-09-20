@@ -19,6 +19,7 @@ interface Product {
   price: number;
   discountPrice?: number;
   stock: number;
+  isFeatured?: boolean; // এই লাইনটি যুক্ত করুন
   images: string[];
   rating: number;
   reviewCount: number;
@@ -89,7 +90,7 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
 
   useEffect(() => {
     const initTimer = setTimeout(() => { targetScale.current = 1; }, 100);
-    let interval: NodeJS.Timeout;
+    let interval: any;
     if (customModels.length > 1) {
       interval = setInterval(() => {
         targetScale.current = 0.01; 
