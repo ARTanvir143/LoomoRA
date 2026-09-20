@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { collection, doc, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../store/authstore';
 import { useCartStore } from '../../store/cartStore';
 import toast from 'react-hot-toast';
 import { 

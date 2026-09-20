@@ -7,7 +7,7 @@ import { doc, getDoc } from 'firebase/firestore';
 
 // Firebase & Store
 import { auth, db } from './config/firebase';
-import { useAuthStore } from './store/authStore';
+import { useAuthStore } from './store/authstore';
 
 // Layout & Common
 import MainLayout from './layouts/MainLayout';
@@ -34,7 +34,7 @@ import NewArrivals from './pages/shop/NewArrivals';
 import ProductDetails from './pages/shop/ProductDetails';
 import Cart from './pages/shop/Cart';
 import Wishlist from './pages/shop/Wishlist';
-import Checkout from './pages/checkout/Checkout';
+import Checkout from './pages/checkout/checkout';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';

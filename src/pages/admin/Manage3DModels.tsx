@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { collection, addDoc, getDocs, doc, deleteDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-
+import { useAuthStore } from '../../store/authstore';
 import { upload3DModelToCloudinary } from '../../services/cloudinary/upload';
 import toast from 'react-hot-toast';
 import { 
@@ -21,7 +21,7 @@ interface Model3D {
 const Manage3DModels = () => {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
+  const { user } = useAuthStore();
   const [models, setModels] = useState<Model3D[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   

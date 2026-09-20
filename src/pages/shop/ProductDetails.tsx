@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../store/authstore';
 import { uploadImageToCloudinary } from '../../services/cloudinary/upload';
 
 interface Product {
