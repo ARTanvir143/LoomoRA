@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
@@ -59,10 +59,7 @@ const ProductDetails = () => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
 
-  // === RECENTLY VIEWED PRODUCTS STATE ===
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
-
-  // === REVIEW STATES ===
   const [reviews, setReviews] = useState<Review[]>([]);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -93,16 +90,11 @@ const ProductDetails = () => {
           if (productData.sizes && productData.sizes.length > 0) setSelectedSize(productData.sizes[0]);
           if (productData.colors && productData.colors.length > 0) setSelectedColor(productData.colors[0]);
 
-          // === SAVE TO RECENTLY VIEWED (LocalStorage) ===
           const rvStore = JSON.parse(localStorage.getItem('loomora_recently_viewed') || '[]');
-          // Remove duplicate if exists, then add to front
           const updatedRv = [productData, ...rvStore.filter((p: Product) => p.id !== productData.id)].slice(0, 5);
           localStorage.setItem('loomora_recently_viewed', JSON.stringify(updatedRv));
-          
-          // Set state for UI (Excluding the current product)
           setRecentlyViewed(updatedRv.filter((p: Product) => p.id !== productData.id).slice(0, 4));
 
-          // Fetch Reviews
           const reviewsQuery = query(collection(db, 'reviews'), where('productId', '==', productData.id));
           const reviewsSnapshot = await getDocs(reviewsQuery);
           const reviewsData: Review[] = [];
@@ -125,7 +117,7 @@ const ProductDetails = () => {
     };
 
     if (slug) {
-      window.scrollTo(0, 0); // Scroll to top on slug change
+      window.scrollTo(0, 0); 
       fetchProductAndReviews();
     }
   }, [slug]);
@@ -273,9 +265,12 @@ const ProductDetails = () => {
     if (product.sizes.length > 0 && !selectedSize) return toast.error('Please select a size');
     if (product.colors.length > 0 && !selectedColor) return toast.error('Please select a color');
 
+    // Type-safe fix: Using proper fallback for price
+    const activePrice = product.discountPrice && product.discountPrice > 0 ? product.discountPrice : product.price;
+
     const cartItem = {
       id: product.id, name: product.name,
-      price: product.discountPrice > 0 ? product.discountPrice : product.price,
+      price: activePrice,
       image: product.images[0], size: selectedSize, color: selectedColor,
       quantity: quantity, maxStock: product.stock
     };
@@ -286,9 +281,11 @@ const ProductDetails = () => {
 
   const handleAddToWishlist = () => {
     if (!product) return;
+    const activePrice = product.discountPrice && product.discountPrice > 0 ? product.discountPrice : product.price;
+    
     toggleItem({
       id: product.id, name: product.name, slug: product.slug,
-      price: product.discountPrice > 0 ? product.discountPrice : product.price,
+      price: activePrice,
       image: product.images[0]
     });
     if (isWished) toast.success('Removed from wishlist');
@@ -344,7 +341,6 @@ const ProductDetails = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col lg:flex-row gap-12 mb-16">
             
-            {/* ================= IMAGE GALLERY ================= */}
             <div className="w-full lg:w-1/2">
               <div className="flex flex-col-reverse md:flex-row gap-4">
                 <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:w-24 custom-scrollbar flex-shrink-0">
@@ -360,16 +356,15 @@ const ProductDetails = () => {
 
                 <div className="relative aspect-[3/4] w-full bg-gray-50 rounded-2xl overflow-hidden flex-grow border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                   <img src={selectedImage || product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                  {product.discountPrice > 0 && (
+                  {product.discountPrice && product.discountPrice > 0 && (
                     <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-lg">Sale</span>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* ================= PRODUCT DETAILS ================= */}
             <div className="w-full lg:w-1/2 flex flex-col">
-              <p className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">{product.category}</p>
+              <p className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-2">{product.category}</p>
               <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight mb-3">{product.name}</h1>
               
               <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })}>
@@ -378,16 +373,16 @@ const ProductDetails = () => {
                     <Star key={i} className={`w-4 h-4 ${i < Math.round(Number(avgRating)) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-100 text-gray-200'}`} />
                   ))}
                 </div>
-                <span className="text-sm font-bold text-gray-700">{avgRating}</span>
+                <span className="text-sm font-medium text-gray-700">{avgRating}</span>
                 <span className="text-sm text-gray-400 font-medium underline hover:text-gray-600">({totalReviews} reviews)</span>
               </div>
 
               <div className="flex items-end gap-3 mb-8">
-                {product.discountPrice > 0 ? (
+                {product.discountPrice && product.discountPrice > 0 ? (
                   <>
                     <span className="text-3xl font-black text-gray-900">${product.discountPrice.toFixed(2)}</span>
                     <span className="text-xl text-gray-400 font-bold line-through mb-1">${product.price.toFixed(2)}</span>
-                    <span className="text-sm font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md mb-1 ml-2">Save ${(product.price - product.discountPrice).toFixed(2)}</span>
+                    <span className="text-sm font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-md mb-1 ml-2">Save ${(product.price - product.discountPrice).toFixed(2)}</span>
                   </>
                 ) : (
                   <span className="text-3xl font-black text-gray-900">${product.price.toFixed(2)}</span>
