@@ -34,6 +34,7 @@ import EditProduct from './pages/admin/EditProduct';
 import ManageOrders from './pages/admin/ManageOrders';
 import AdminLegalPages from './pages/admin/LegalPages';
 import Manage3DModels from './pages/admin/Manage3DModels';
+import ManageBanners from './pages/admin/ManageBanners';
 import ManageCategories from './pages/admin/ManageCategories';
 import AdminCustomers from './pages/admin/Customers';
 import AdminSettings from './pages/admin/Settings';
