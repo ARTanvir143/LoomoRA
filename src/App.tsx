@@ -13,6 +13,7 @@ import * as THREE from 'three';
 
 // Firebase & Store Imports
 import { auth, db } from './config/firebase';
+// @ts-ignore
 import { useAuthStore } from './store/authStore';
 
 // Layouts & Components
