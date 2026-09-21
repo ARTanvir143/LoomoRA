@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useAuthStore } from '../../store/authstore';
+import { useAuthStore } from '../../store/authStore';
 import { 
   LayoutDashboard, 
   Package, 

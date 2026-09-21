@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { collection, addDoc, getDocs, doc, deleteDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { useAuthStore } from '../../store/authstore';
+import { useAuthStore } from '../../store/authStore';
 import { upload3DModelToCloudinary } from '../../services/cloudinary/upload';
 import toast from 'react-hot-toast';
 import { 

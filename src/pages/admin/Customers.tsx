@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { useAuthStore } from '../../store/authstore';
+import { useAuthStore } from '../../store/authStore';
 import { 
   LayoutDashboard, Package, ShoppingBag, Users, Menu, X, Tags, Settings, FileText,
   Search, Loader2, Eye, Box, MapPin, Calendar, Clock

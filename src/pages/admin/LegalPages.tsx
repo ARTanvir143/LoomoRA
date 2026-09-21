@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import JoditEditor from 'jodit-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { useAuthStore } from '../../store/authstore';
+import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import { 
   LayoutDashboard, Package, ShoppingBag, Users, Menu, X, Tags, Settings, FileText,

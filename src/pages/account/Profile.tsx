@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase';
-import { useAuthStore } from '../../store/authstore';
+import { useAuthStore } from '../../store/authStore';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
 import { User, Mail, Shield, Loader2, Save, MapPin, FileText, Settings, LogOut } from 'lucide-react';

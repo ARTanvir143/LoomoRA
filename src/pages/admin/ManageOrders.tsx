@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { collection, getDocs, doc, updateDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { useAuthStore } from '../../store/authstore';
+import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import { LayoutDashboard, Package, ShoppingBag, Users, Menu, X, Tags, FileText, Search, Loader2, Filter, ChevronDown, Eye, Box } from 'lucide-react';
 
