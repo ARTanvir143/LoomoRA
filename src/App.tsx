@@ -40,6 +40,7 @@ import Shop from './pages/shop/Shop';
 import ProductDetails from './pages/shop/ProductDetails';
 import Cart from './pages/shop/Cart';
 import Wishlist from './pages/shop/Wishlist';
+// @ts-ignore
 import Checkout from './pages/checkout/Checkout';
 import Categories from './pages/shop/Categories';
 import NewArrivals from './pages/shop/NewArrivals';
@@ -131,7 +132,6 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
 
   useFrame(() => {
     if (groupRef.current && customModels.length > 0) {
-      // ম্যানুয়ালি ঘোরানোর কোড মুছে ফেলা হয়েছে, কারণ OrbitControls এখন এটি কন্ট্রোল করবে
       groupRef.current.scale.lerp(new THREE.Vector3(targetScale.current, targetScale.current, targetScale.current), 0.08);
     }
   });
@@ -139,7 +139,6 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   if (customModels.length === 0) return null;
 
   return (
-    // মডেলটি নির্দিষ্ট জায়গায় ফিক্সড থাকবে
     <group position={isMobile ? [0, 1.5, 0] : [3, 0, 0]} scale={isMobile ? 0.7 : 1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
@@ -167,13 +166,13 @@ const InteractiveControls = () => {
 
   return (
     <OrbitControls 
-      enableZoom={false} // জুম বন্ধ যাতে পেজ না ভাঙে
-      enablePan={false}  // মডেল সরিয়ে ফেলা বন্ধ
-      autoRotate={true}  // নিজে নিজেই ঘুরবে
-      autoRotateSpeed={1.5} // ঘোরার স্পিড
-      target={isMobile ? [0, 1.5, 0] : [3, 0, 0]} // ক্যামেরা ঠিক মডেলের দিকে তাকিয়ে থাকবে
-      minPolarAngle={Math.PI / 3} // নিচ থেকে দেখা লিমিট করে দেওয়া হলো
-      maxPolarAngle={Math.PI / 1.5} // ওপর থেকে দেখা লিমিট করে দেওয়া হলো
+      enableZoom={false} 
+      enablePan={false}  
+      autoRotate={true}  
+      autoRotateSpeed={1.5} 
+      target={isMobile ? [0, 1.5, 0] : [3, 0, 0]} 
+      minPolarAngle={Math.PI / 3} 
+      maxPolarAngle={Math.PI / 1.5} 
       makeDefault
     />
   );
@@ -231,10 +230,7 @@ const Home = () => {
             <directionalLight position={[-10, -10, -5]} intensity={1.5} color="#e2e8f0" />
             <Suspense fallback={null}>
               <FashionCarousel customModels={customModels} />
-              
-              {/* === INTERACTIVE CONTROLS ADDED HERE === */}
               <InteractiveControls />
-              
               <Environment preset="city" />
             </Suspense>
           </Canvas>
