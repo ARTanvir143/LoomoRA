@@ -157,8 +157,8 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
 
   return (
     // 💡 এখানেই আপনি মডেলের পজিশন পাল্টাতে পারবেন! 
-    // Desktop এ [30, 0, 0] মানে ডানদিকে। Mobile এ [0, 5, 0] মানে মাঝখানে ওপরে।
-    <group position={isMobile ? [0, 5, 0] : [30, 0, 0]} scale={isMobile ? 0.65 : 1}>
+    // Desktop এ [5, 5, 0] মানে ডানদিকে। Mobile এ [0, 5, 0] মানে মাঝখানে ওপরে।
+    <group position={isMobile ? [0, 5, 0] : [5, 5, 0]} scale={isMobile ? 0.65 : 1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
           <Suspense fallback={null}>
@@ -190,7 +190,7 @@ const InteractiveControls = () => {
       autoRotate={true}  
       autoRotateSpeed={1.5} 
       // 💡 ক্যামেরার টার্গেটও মডেলের পজিশন অনুযায়ী সেট করতে হয়।
-      target={isMobile ? [0, 5, 0] : [30, 0, 0]} 
+      target={isMobile ? [0, 5, 0] : [5, 5, 0]} 
       minPolarAngle={Math.PI / 3} 
       maxPolarAngle={Math.PI / 1.5} 
       makeDefault
