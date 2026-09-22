@@ -52,7 +52,6 @@ import LegalPageViewer from './pages/legal/LegalPageViewer';
 import NotFound from './pages/NotFound';
 import Addresses from './pages/account/Addresses';
 
-// Interfaces for Home Page Products
 interface Product {
   id: string;
   name: string;
@@ -157,7 +156,9 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   if (customModels.length === 0) return null;
 
   return (
-    <group position={isMobile ? [0, 1, 0] : [4, 0, 0]} scale={isMobile ? 0.8 : 1}>
+    // 💡 এখানেই আপনি মডেলের পজিশন পাল্টাতে পারবেন! 
+    // Desktop এ [3.5, 0, 0] মানে ডানদিকে। Mobile এ [0, 1.5, 0] মানে মাঝখানে ওপরে।
+    <group position={isMobile ? [0, 1.5, 0] : [3.5, 0, 0]} scale={isMobile ? 0.65 : 1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
           <Suspense fallback={null}>
@@ -188,7 +189,8 @@ const InteractiveControls = () => {
       enablePan={false}  
       autoRotate={true}  
       autoRotateSpeed={1.5} 
-      target={isMobile ? [0, 1, 0] : [4, 0, 0]} 
+      // 💡 ক্যামেরার টার্গেটও মডেলের পজিশন অনুযায়ী সেট করতে হয়।
+      target={isMobile ? [0, 1.5, 0] : [3.5, 0, 0]} 
       minPolarAngle={Math.PI / 3} 
       maxPolarAngle={Math.PI / 1.5} 
       makeDefault
@@ -197,7 +199,7 @@ const InteractiveControls = () => {
 };
 
 // ==========================================
-// 5. MAIN HOME COMPONENT (Fully Restored)
+// 5. MAIN HOME COMPONENT
 // ==========================================
 const Home = () => {
   const [customModels, setCustomModels] = useState<string[]>([]);
@@ -209,17 +211,14 @@ const Home = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // 1. Fetch 3D Models
         const modelsQuery = query(collection(db, '3d_models'), orderBy('createdAt', 'desc'));
         const modelsSnap = await getDocs(modelsQuery);
         setCustomModels(modelsSnap.docs.map(doc => doc.data().modelUrl));
 
-        // 2. Fetch New Arrivals
         const newArrQuery = query(collection(db, 'products'), orderBy('createdAt', 'desc'), limit(4));
         const newArrSnap = await getDocs(newArrQuery);
         setNewArrivals(newArrSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
 
-        // 3. Fetch Featured Products
         const featuredQuery = query(collection(db, 'products'), where('isFeatured', '==', true), limit(4));
         const featuredSnap = await getDocs(featuredQuery);
         setFeaturedProducts(featuredSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
@@ -233,7 +232,6 @@ const Home = () => {
     fetchData();
   }, []);
 
-  // Reusable Product Card Component
   const ProductCard = ({ product }: { product: Product }) => (
     <Link to={`/product/${product.slug}`} className="group block">
       <div className="relative aspect-[3/4] bg-gray-100 rounded-2xl overflow-hidden mb-4 shadow-sm group-hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-all duration-300">
@@ -308,10 +306,12 @@ const Home = () => {
         }
       `}</style>
       
-      {/* ================= HERO SECTION (3D) ================= */}
-      <div className="relative min-h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-20 md:pb-0">
+      {/* ================= HERO SECTION ================= */}
+      {/* 💡 FIX: মোবাইলের জন্য 'flex-col' দেওয়া হয়েছে, যাতে 3D মডেল ওপরে থাকে এবং টেক্সট নিচে যায় */}
+      <div className="relative min-h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-16 md:pb-0 pt-4 md:pt-0">
         
-        <div className="absolute inset-0 z-0 pointer-events-auto">
+        {/* 3D CANVAS BACKGROUND */}
+        <div className="absolute inset-0 z-0 pointer-events-auto h-full">
           <Canvas camera={{ position: [0, 0, 8], fov: window.innerWidth < 768 ? 55 : 45 }}>
             <ambientLight intensity={1.5} color="#ffffff" />
             <spotLight position={[10, 10, 10]} angle={0.2} penumbra={1} intensity={2.5} color="#ffffff" castShadow />
@@ -324,26 +324,34 @@ const Home = () => {
           </Canvas>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-16 md:pt-0">
-          <div className="max-w-xl text-center md:text-left mt-0 md:mt-0 pointer-events-auto bg-white/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-6 md:p-0 rounded-3xl md:rounded-none shadow-lg md:shadow-none border border-white/50 md:border-transparent">
+        {/* FOREGROUND UI OVERLAY */}
+        {/* 💡 FIX: মোবাইলে টেক্সট এরিয়া নিচে নামানোর জন্য 'mt-auto' এবং 'pb-4' ব্যবহার করা হয়েছে */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-64 md:pt-0 mt-auto md:mt-0 pb-4 md:pb-0">
+          
+          <div className="max-w-xl text-center md:text-left pointer-events-auto bg-white/70 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-6 md:p-0 rounded-[2rem] md:rounded-none shadow-xl md:shadow-none border border-white/50 md:border-transparent mt-[40vh] md:mt-0">
+            
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
-              <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-sm font-bold tracking-widest mb-6 border border-blue-200">
+              <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-sm font-bold tracking-widest mb-4 border border-blue-200 shadow-sm">
                 PREMIUM COLLECTION
               </span>
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-gray-900 mb-6 tracking-tight leading-[1.1] flex flex-wrap justify-center md:justify-start gap-x-3 pointer-events-none">
+            
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-gray-900 mb-4 md:mb-6 tracking-tight leading-[1.1] flex flex-wrap justify-center md:justify-start gap-x-3 pointer-events-none">
               <SparkleText text="Elevate" delayOffset={0.2} />
               <SparkleText text="Your" delayOffset={0.8} />
               <SparkleText text="Style" delayOffset={1.4} className="text-blue-600" />
             </h1>
-            <p className="text-gray-600 text-base md:text-xl mb-10 max-w-md mx-auto md:mx-0 leading-relaxed font-medium bg-transparent md:bg-white/40 md:p-4 rounded-2xl md:backdrop-blur-sm md:border md:border-white/60 md:shadow-sm animate-fade-in-up" style={{ animationDelay: '1.8s', opacity: 0 }}>
+            
+            <p className="text-gray-700 text-base md:text-xl mb-8 max-w-md mx-auto md:mx-0 leading-relaxed font-medium bg-transparent md:bg-white/40 md:p-4 rounded-2xl md:backdrop-blur-sm md:border md:border-white/60 md:shadow-sm animate-fade-in-up" style={{ animationDelay: '1.8s', opacity: 0 }}>
               Discover our exclusive interactive collection. Drag to rotate and explore premium luxury from every angle.
             </p>
-            <div className="flex flex-col sm:flex-row gap-5 justify-center md:justify-start animate-fade-in-up" style={{ animationDelay: '2.0s', opacity: 0 }}>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start animate-fade-in-up" style={{ animationDelay: '2.0s', opacity: 0 }}>
               <Link to="/shop" className="bg-gray-900 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-600 transition-all flex items-center justify-center text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.1)] active:scale-95 group">
                 Shop Now <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-2 transition-transform" />
               </Link>
             </div>
+
           </div>
         </div>
       </div>
@@ -384,7 +392,7 @@ const Home = () => {
               <span className="text-blue-600 font-bold tracking-widest text-sm uppercase mb-2 block">Just Dropped</span>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">New Arrivals</h2>
             </div>
-            <Link to="/shop" className="hidden md:flex items-center font-bold text-gray-900 hover:text-blue-600 transition-colors group">
+            <Link to="/new-arrivals" className="hidden md:flex items-center font-bold text-gray-900 hover:text-blue-600 transition-colors group">
               View All <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -401,10 +409,6 @@ const Home = () => {
               <p className="text-gray-500 font-bold">New collections coming soon!</p>
             </div>
           )}
-          
-          <Link to="/shop" className="md:hidden mt-8 w-full bg-white border border-gray-200 text-gray-900 py-4 rounded-xl font-bold hover:bg-gray-50 transition-colors flex items-center justify-center shadow-sm">
-            View All New Arrivals <ArrowRight className="w-5 h-5 ml-2" />
-          </Link>
         </div>
       </div>
 
@@ -464,12 +468,6 @@ const Home = () => {
     </>
   );
 };
-
-const DummyPage = ({ title }: { title: string }) => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <h2 className="text-2xl font-semibold text-gray-700">{title} Page Coming Soon...</h2>
-  </div>
-);
 
 // ==========================================
 // MAIN APP COMPONENT
