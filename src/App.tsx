@@ -34,7 +34,6 @@ import EditProduct from './pages/admin/EditProduct';
 import ManageOrders from './pages/admin/ManageOrders';
 import AdminLegalPages from './pages/admin/LegalPages';
 import Manage3DModels from './pages/admin/Manage3DModels';
-import ManageBanners from './pages/admin/ManageBanners';
 import ManageCategories from './pages/admin/ManageCategories';
 import AdminCustomers from './pages/admin/Customers';
 import AdminSettings from './pages/admin/Settings';
@@ -42,7 +41,8 @@ import Shop from './pages/shop/Shop';
 import ProductDetails from './pages/shop/ProductDetails';
 import Cart from './pages/shop/Cart';
 import Wishlist from './pages/shop/Wishlist';
-import Checkout from './pages/Checkout/Checkout';
+// @ts-ignore
+import Checkout from './pages/checkout/Checkout';
 import Categories from './pages/shop/Categories';
 import NewArrivals from './pages/shop/NewArrivals';
 import Contact from './pages/Contact';
@@ -86,10 +86,14 @@ const DynamicModel = ({ url }: { url: string }) => {
     const box = new THREE.Box3().setFromObject(clone);
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
+    
+    // Scale Logic
     const maxDim = Math.max(size.x, size.y, size.z);
     const scaleFactor = 3.5 / (maxDim || 1); 
     
     clone.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    
+    // Center Logic (Fixes off-center models)
     clone.position.x = -center.x * scaleFactor;
     clone.position.y = -center.y * scaleFactor;
     clone.position.z = -center.z * scaleFactor;
@@ -99,7 +103,7 @@ const DynamicModel = ({ url }: { url: string }) => {
 };
 
 // ==========================================
-// 3. 3D CAROUSEL SWITCHER
+// 3. 3D CAROUSEL SWITCHER (FIXED POSITIONS)
 // ==========================================
 const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   const [index, setIndex] = useState(0);
@@ -140,7 +144,8 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   if (customModels.length === 0) return null;
 
   return (
-    <group position={isMobile ? [0, 1.5, 0] : [3, 0, 0]} scale={isMobile ? 0.7 : 1}>
+    // FIX: ডেস্কটপে মডেলটি ৪ ইউনিট ডানে ([4, 0, 0]) থাকবে। মোবাইলে একটু নিচে ([0, 0, 0]) থাকবে।
+    <group position={isMobile ? [0, -0.5, 0] : [4, 0, 0]} scale={isMobile ? 0.8 : 1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
           <Suspense fallback={null}>
@@ -154,7 +159,7 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
 };
 
 // ==========================================
-// 4. INTERACTIVE 3D CONTROLS (Touch & Drag)
+// 4. INTERACTIVE 3D CONTROLS
 // ==========================================
 const InteractiveControls = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -171,7 +176,8 @@ const InteractiveControls = () => {
       enablePan={false}  
       autoRotate={true}  
       autoRotateSpeed={1.5} 
-      target={isMobile ? [0, 1.5, 0] : [3, 0, 0]} 
+      // FIX: ক্যামেরার টার্গেটও মডেলের পজিশন অনুযায়ী সেট করা হলো
+      target={isMobile ? [0, -0.5, 0] : [4, 0, 0]} 
       minPolarAngle={Math.PI / 3} 
       maxPolarAngle={Math.PI / 1.5} 
       makeDefault
@@ -222,10 +228,12 @@ const Home = () => {
         }
       `}</style>
       
-      <div className="relative h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing">
+      {/* FIX: মোবাইলের জন্য হাইট Auto করা হয়েছে, যাতে লেখা এবং 3D মডেল সুন্দরভাবে জায়গা পায় */}
+      <div className="relative min-h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-20 md:pb-0">
         
         <div className="absolute inset-0 z-0 pointer-events-auto">
-          <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+          {/* FIX: ডেস্কটপের জন্য fov 45 এবং মোবাইলের জন্য fov 55 (যাতে মডেল পুরো স্ক্রিনে সুন্দরভাবে ফিট হয়) */}
+          <Canvas camera={{ position: [0, 0, 8], fov: window.innerWidth < 768 ? 55 : 45 }}>
             <ambientLight intensity={1.5} color="#ffffff" />
             <spotLight position={[10, 10, 10]} angle={0.2} penumbra={1} intensity={2.5} color="#ffffff" castShadow />
             <directionalLight position={[-10, -10, -5]} intensity={1.5} color="#e2e8f0" />
@@ -237,19 +245,20 @@ const Home = () => {
           </Canvas>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pb-20 md:pb-0 pt-10 md:pt-0">
-          <div className="max-w-2xl text-center md:text-left mt-auto md:mt-0 pointer-events-auto">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-16 md:pt-0">
+          {/* FIX: টেক্সট এরিয়া ডেস্কটপে বামদিকে এবং মোবাইলে ওপরে রাখা হয়েছে */}
+          <div className="max-w-xl text-center md:text-left mt-0 md:mt-0 pointer-events-auto bg-white/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-6 md:p-0 rounded-3xl md:rounded-none shadow-lg md:shadow-none border border-white/50 md:border-transparent">
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
               <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-sm font-bold tracking-widest mb-6 border border-blue-200">
                 PREMIUM COLLECTION
               </span>
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 tracking-tight leading-[1.1] flex flex-wrap justify-center md:justify-start gap-x-3 pointer-events-none">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-gray-900 mb-6 tracking-tight leading-[1.1] flex flex-wrap justify-center md:justify-start gap-x-3 pointer-events-none">
               <SparkleText text="Elevate" delayOffset={0.2} />
               <SparkleText text="Your" delayOffset={0.8} />
               <SparkleText text="Style" delayOffset={1.4} className="text-blue-600" />
             </h1>
-            <p className="text-gray-600 text-lg md:text-xl mb-12 max-w-md mx-auto md:mx-0 leading-relaxed font-medium bg-white/40 p-4 rounded-2xl backdrop-blur-sm border border-white/60 shadow-sm animate-fade-in-up" style={{ animationDelay: '1.8s', opacity: 0 }}>
+            <p className="text-gray-600 text-base md:text-xl mb-10 max-w-md mx-auto md:mx-0 leading-relaxed font-medium bg-transparent md:bg-white/40 md:p-4 rounded-2xl md:backdrop-blur-sm md:border md:border-white/60 md:shadow-sm animate-fade-in-up" style={{ animationDelay: '1.8s', opacity: 0 }}>
               Discover our exclusive interactive collection. Drag to rotate and explore premium luxury from every angle.
             </p>
             <div className="flex flex-col sm:flex-row gap-5 justify-center md:justify-start animate-fade-in-up" style={{ animationDelay: '2.0s', opacity: 0 }}>
