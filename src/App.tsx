@@ -32,7 +32,6 @@ import AdminProducts from './pages/admin/Products';
 import AddProduct from './pages/admin/AddProduct';
 import EditProduct from './pages/admin/EditProduct';
 import ManageOrders from './pages/admin/ManageOrders';
-import ManageBanners from './pages/admin/ManageBanners';
 import AdminLegalPages from './pages/admin/LegalPages';
 import Manage3DModels from './pages/admin/Manage3DModels';
 import ManageCategories from './pages/admin/ManageCategories';
@@ -121,6 +120,13 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   const [index, setIndex] = useState(0);
   const groupRef = useRef<THREE.Group>(null);
   const targetScale = useRef(0); 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const initTimer = setTimeout(() => { targetScale.current = 1; }, 100);
@@ -149,7 +155,7 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   if (customModels.length === 0) return null;
 
   return (
-    <group position={[0, 0, 0]} scale={1}>
+    <group position={isMobile ? [0, 1.5, 0] : [3.5, 0, 0]} scale={isMobile ? 0.65 : 1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
           <Suspense fallback={null}>
@@ -163,7 +169,7 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
 };
 
 // ==========================================
-// 4. INTERACTIVE 3D CONTROLS (Fixing Zoom Issue)
+// 4. INTERACTIVE 3D CONTROLS (Strictly No Zoom)
 // ==========================================
 const InteractiveControls = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -188,11 +194,11 @@ const InteractiveControls = () => {
 
   return (
     <OrbitControls 
-      enableZoom={false} // জুম বন্ধ
-      enablePan={false}  // সরানো বন্ধ
+      enableZoom={false} // Strict No Zoom
+      enablePan={false}  // Strict No Pan
       autoRotate={true}  
       autoRotateSpeed={1.5} 
-      target={[0, 0, 0]} 
+      target={isMobile ? [0, 1.5, 0] : [3.5, 0, 0]} 
       minPolarAngle={Math.PI / 3} 
       maxPolarAngle={Math.PI / 1.5} 
       makeDefault
@@ -306,16 +312,19 @@ const Home = () => {
         .animate-fade-in-up {
           animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+
+        /* 💡 FIX: This CSS completely prevents the canvas from capturing scroll/zoom events */
+        .prevent-scroll-zoom canvas {
+          touch-action: none !important;
+          overscroll-behavior: none !important;
+        }
       `}</style>
       
-      <div className="relative min-h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-20 md:pb-0">
+      {/* 💡 FIX: Canvas Parent Container. Using touch-action: pan-y to allow scrolling but prevent pinch-to-zoom */}
+      <div className="prevent-scroll-zoom relative min-h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-20 md:pb-0" style={{ touchAction: 'pan-y' }}>
         
         <div className="absolute inset-0 z-0 pointer-events-auto">
-          {/* FIX: Canvas এ touchAction='none' দেওয়া হলো যাতে মোবাইল ব্রাউজারে পেজ জুম বা স্ক্রল না হয় */}
-          <Canvas 
-            camera={{ position: [0, 0, 8], fov: window.innerWidth < 768 ? 55 : 45 }} 
-            style={{ touchAction: 'none' }}
-          >
+          <Canvas camera={{ position: [0, 0, 8], fov: window.innerWidth < 768 ? 55 : 45 }}>
             <ambientLight intensity={1.5} color="#ffffff" />
             <spotLight position={[10, 10, 10]} angle={0.2} penumbra={1} intensity={2.5} color="#ffffff" castShadow />
             <directionalLight position={[-10, -10, -5]} intensity={1.5} color="#e2e8f0" />
@@ -464,6 +473,12 @@ const Home = () => {
   );
 };
 
+const DummyPage = ({ title }: { title: string }) => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <h2 className="text-2xl font-semibold text-gray-700">{title} Page Coming Soon...</h2>
+  </div>
+);
+
 // ==========================================
 // MAIN APP COMPONENT
 // ==========================================
@@ -499,6 +514,7 @@ function App() {
         setUser(null);
       }
     });
+
     return () => unsubscribe();
   }, [setUser]);
 
