@@ -41,7 +41,6 @@ import Shop from './pages/shop/Shop';
 import ProductDetails from './pages/shop/ProductDetails';
 import Cart from './pages/shop/Cart';
 import Wishlist from './pages/shop/Wishlist';
-// @ts-ignore
 import Checkout from './pages/checkout/Checkout';
 import Categories from './pages/shop/Categories';
 import NewArrivals from './pages/shop/NewArrivals';
