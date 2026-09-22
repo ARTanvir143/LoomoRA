@@ -31,11 +31,11 @@ import AdminDashboard from './pages/admin/Dashboard';
 import AdminProducts from './pages/admin/Products';
 import AddProduct from './pages/admin/AddProduct';
 import EditProduct from './pages/admin/EditProduct';
-import ManageBanners from './pages/admin/ManageBanners';
 import ManageOrders from './pages/admin/ManageOrders';
 import AdminLegalPages from './pages/admin/LegalPages';
 import Manage3DModels from './pages/admin/Manage3DModels';
 import ManageCategories from './pages/admin/ManageCategories';
+import ManageBanners from './pages/admin/ManageBanners'; // 💡 FIXED: IMPORT ADDED HERE!
 import AdminCustomers from './pages/admin/Customers';
 import AdminSettings from './pages/admin/Settings';
 import Shop from './pages/shop/Shop';
@@ -121,13 +121,6 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   const [index, setIndex] = useState(0);
   const groupRef = useRef<THREE.Group>(null);
   const targetScale = useRef(0); 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     const initTimer = setTimeout(() => { targetScale.current = 1; }, 100);
@@ -156,7 +149,8 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   if (customModels.length === 0) return null;
 
   return (
-    <group position={isMobile ? [0, 1.5, 0] : [3.5, 0, 0]} scale={isMobile ? 0.65 : 1}>
+    // মডেলকে সব ডিভাইসের জন্য একদম মাঝখানে (0,0,0) রাখা হলো
+    <group position={[0, 0, 0]} scale={1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
           <Suspense fallback={null}>
@@ -164,13 +158,14 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
           </Suspense>
         </group>
       </Float>
+      {/* ফ্লোরের শ্যাডো */}
       <ContactShadows position={[0, -2, 0]} opacity={0.4} scale={7} blur={2.5} far={2} color="#000000" />
     </group>
   );
 };
 
 // ==========================================
-// 4. INTERACTIVE 3D CONTROLS (Strictly No Zoom)
+// 4. INTERACTIVE 3D CONTROLS (ZOOM COMPLETELY LOCKED)
 // ==========================================
 const InteractiveControls = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -183,11 +178,13 @@ const InteractiveControls = () => {
 
   useFrame((state) => {
     if (!isMobile) {
+      // ডেস্কটপে ক্যামেরা একটু বামে (-2.5) থাকবে, ফলে মডেলটি ডানদিকে দেখাবে!
       const targetX = -2.5 + (state.pointer.x * 1);
       const targetY = (state.pointer.y * 1);
       state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, targetX, 0.05);
       state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.05);
     } else {
+      // মোবাইলে ক্যামেরা নিচে (-1.5) থাকবে, ফলে মডেলটি ওপরে দেখাবে!
       state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, 0, 0.05);
       state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -1.5, 0.05);
     }
@@ -199,9 +196,11 @@ const InteractiveControls = () => {
       enablePan={false}  // Strict No Pan
       autoRotate={true}  
       autoRotateSpeed={1.5} 
-      target={isMobile ? [0, 1.5, 0] : [3.5, 0, 0]} 
+      target={[0, 0, 0]} 
       minPolarAngle={Math.PI / 3} 
       maxPolarAngle={Math.PI / 1.5} 
+      minDistance={8} // 💡 FIX: ক্যামেরা কোনোভাবেই কাছে আসতে পারবে না (Zoom in lock)
+      maxDistance={8} // 💡 FIX: ক্যামেরা কোনোভাবেই দূরে যেতে পারবে না (Zoom out lock)
       makeDefault
     />
   );
@@ -314,18 +313,18 @@ const Home = () => {
           animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* 💡 FIX: This CSS completely prevents the canvas from capturing scroll/zoom events */
+        /* 💡 FIX: This CSS completely prevents the canvas from capturing scroll/zoom events on mobile */
         .prevent-scroll-zoom canvas {
-          touch-action: none !important;
+          touch-action: pan-y !important;
           overscroll-behavior: none !important;
         }
       `}</style>
       
-      {/* 💡 FIX: Canvas Parent Container. Using touch-action: pan-y to allow scrolling but prevent pinch-to-zoom */}
-      <div className="prevent-scroll-zoom relative min-h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-20 md:pb-0" style={{ touchAction: 'pan-y' }}>
+      <div className="prevent-scroll-zoom relative min-h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-20 md:pb-0">
         
         <div className="absolute inset-0 z-0 pointer-events-auto">
-          <Canvas camera={{ position: [0, 0, 8], fov: window.innerWidth < 768 ? 55 : 45 }}>
+          {/* fov 45 ফিক্স রাখা হয়েছে যাতে মডেল ছোট না হয় */}
+          <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
             <ambientLight intensity={1.5} color="#ffffff" />
             <spotLight position={[10, 10, 10]} angle={0.2} penumbra={1} intensity={2.5} color="#ffffff" castShadow />
             <directionalLight position={[-10, -10, -5]} intensity={1.5} color="#e2e8f0" />
@@ -337,8 +336,8 @@ const Home = () => {
           </Canvas>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-16 md:pt-0">
-          <div className="max-w-xl text-center md:text-left mt-0 md:mt-0 pointer-events-auto bg-white/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-6 md:p-0 rounded-3xl md:rounded-none shadow-lg md:shadow-none border border-white/50 md:border-transparent">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-10 md:pt-0">
+          <div className="max-w-xl text-center md:text-left mt-auto md:mt-0 pointer-events-auto bg-white/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-6 md:p-0 rounded-3xl md:rounded-none shadow-lg md:shadow-none border border-white/50 md:border-transparent">
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
               <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-sm font-bold tracking-widest mb-6 border border-blue-200">
                 PREMIUM COLLECTION
