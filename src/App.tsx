@@ -33,7 +33,6 @@ import AddProduct from './pages/admin/AddProduct';
 import EditProduct from './pages/admin/EditProduct';
 import ManageOrders from './pages/admin/ManageOrders';
 import AdminLegalPages from './pages/admin/LegalPages';
-import ManageBanners from './pages/admin/ManageBanners';
 import Manage3DModels from './pages/admin/Manage3DModels';
 import ManageCategories from './pages/admin/ManageCategories';
 import AdminCustomers from './pages/admin/Customers';
@@ -102,7 +101,6 @@ const DynamicModel = ({ url }: { url: string }) => {
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     
-    // মডেলকে ফিক্সড ৩.৫ সাইজে আনা হলো
     const maxDim = Math.max(size.x, size.y, size.z);
     const scaleFactor = 3.5 / (maxDim || 1); 
     
@@ -150,7 +148,6 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   if (customModels.length === 0) return null;
 
   return (
-    // মডেলকে সব ডিভাইসের জন্য একদম মাঝখানে (0,0,0) রাখা হলো
     <group position={[0, 0, 0]} scale={1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
@@ -159,14 +156,13 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
           </Suspense>
         </group>
       </Float>
-      {/* ফ্লোরের শ্যাডো */}
       <ContactShadows position={[0, -2, 0]} opacity={0.4} scale={7} blur={2.5} far={2} color="#000000" />
     </group>
   );
 };
 
 // ==========================================
-// 4. INTERACTIVE 3D CONTROLS & CAMERA LOGIC
+// 4. INTERACTIVE 3D CONTROLS (Fixing Zoom Issue)
 // ==========================================
 const InteractiveControls = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -177,16 +173,13 @@ const InteractiveControls = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 💡 আসল ম্যাজিক: মডেলকে মাঝখানে রেখে ক্যামেরাকে বাঁকা করে দেওয়া হলো!
   useFrame((state) => {
     if (!isMobile) {
-      // ডেস্কটপে ক্যামেরা একটু বামে (-2.5) থাকবে, ফলে মডেলটি ডানদিকে দেখাবে!
       const targetX = -2.5 + (state.pointer.x * 1);
       const targetY = (state.pointer.y * 1);
       state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, targetX, 0.05);
       state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.05);
     } else {
-      // মোবাইলে ক্যামেরা নিচে (-1.5) থাকবে, ফলে মডেলটি ওপরে দেখাবে!
       state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, 0, 0.05);
       state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -1.5, 0.05);
     }
@@ -194,11 +187,11 @@ const InteractiveControls = () => {
 
   return (
     <OrbitControls 
-      enableZoom={false} 
-      enablePan={false}  
+      enableZoom={false} // জুম বন্ধ
+      enablePan={false}  // সরানো বন্ধ
       autoRotate={true}  
       autoRotateSpeed={1.5} 
-      target={[0, 0, 0]} // মডেল যেহেতু 0,0,0 তে আছে, তাই টার্গেটও 0,0,0
+      target={[0, 0, 0]} 
       minPolarAngle={Math.PI / 3} 
       maxPolarAngle={Math.PI / 1.5} 
       makeDefault
@@ -317,8 +310,11 @@ const Home = () => {
       <div className="relative min-h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-20 md:pb-0">
         
         <div className="absolute inset-0 z-0 pointer-events-auto">
-          {/* fov 45 ফিক্স রাখা হয়েছে যাতে মডেল ছোট না হয় */}
-          <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+          {/* FIX: Canvas এ touchAction='none' দেওয়া হলো যাতে মোবাইল ব্রাউজারে পেজ জুম বা স্ক্রল না হয় */}
+          <Canvas 
+            camera={{ position: [0, 0, 8], fov: window.innerWidth < 768 ? 55 : 45 }} 
+            style={{ touchAction: 'none' }}
+          >
             <ambientLight intensity={1.5} color="#ffffff" />
             <spotLight position={[10, 10, 10]} angle={0.2} penumbra={1} intensity={2.5} color="#ffffff" castShadow />
             <directionalLight position={[-10, -10, -5]} intensity={1.5} color="#e2e8f0" />
@@ -330,8 +326,8 @@ const Home = () => {
           </Canvas>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-10 md:pt-0">
-          <div className="max-w-xl text-center md:text-left mt-auto md:mt-0 pointer-events-auto bg-white/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-6 md:p-0 rounded-3xl md:rounded-none shadow-lg md:shadow-none border border-white/50 md:border-transparent">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-16 md:pt-0">
+          <div className="max-w-xl text-center md:text-left mt-0 md:mt-0 pointer-events-auto bg-white/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-6 md:p-0 rounded-3xl md:rounded-none shadow-lg md:shadow-none border border-white/50 md:border-transparent">
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
               <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-sm font-bold tracking-widest mb-6 border border-blue-200">
                 PREMIUM COLLECTION
@@ -467,12 +463,6 @@ const Home = () => {
   );
 };
 
-const DummyPage = ({ title }: { title: string }) => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <h2 className="text-2xl font-semibold text-gray-700">{title} Page Coming Soon...</h2>
-  </div>
-);
-
 // ==========================================
 // MAIN APP COMPONENT
 // ==========================================
@@ -508,7 +498,6 @@ function App() {
         setUser(null);
       }
     });
-
     return () => unsubscribe();
   }, [setUser]);
 
