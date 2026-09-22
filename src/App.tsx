@@ -33,6 +33,7 @@ import AddProduct from './pages/admin/AddProduct';
 import EditProduct from './pages/admin/EditProduct';
 import ManageOrders from './pages/admin/ManageOrders';
 import AdminLegalPages from './pages/admin/LegalPages';
+import ManageBanners from './pages/admin/ManageBanners';
 import Manage3DModels from './pages/admin/Manage3DModels';
 import ManageCategories from './pages/admin/ManageCategories';
 import AdminCustomers from './pages/admin/Customers';
