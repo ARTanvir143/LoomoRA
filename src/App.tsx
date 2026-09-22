@@ -3,8 +3,8 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { HelmetProvider, Helmet } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs, doc, getDoc, query, orderBy } from 'firebase/firestore';
-import { ArrowRight } from 'lucide-react';
+import { collection, getDocs, doc, getDoc, query, orderBy, limit, where } from 'firebase/firestore';
+import { ArrowRight, Truck, ShieldCheck, Clock, RotateCcw, ShoppingBag, Star, Loader2 } from 'lucide-react';
 
 // 3D Imports
 import { Canvas, useFrame } from '@react-three/fiber';
@@ -42,6 +42,7 @@ import Shop from './pages/shop/Shop';
 import ProductDetails from './pages/shop/ProductDetails';
 import Cart from './pages/shop/Cart';
 import Wishlist from './pages/shop/Wishlist';
+// @ts-ignore
 import Checkout from './pages/checkout/Checkout';
 import Categories from './pages/shop/Categories';
 import NewArrivals from './pages/shop/NewArrivals';
@@ -50,6 +51,21 @@ import Faq from './pages/Faq';
 import LegalPageViewer from './pages/legal/LegalPageViewer';
 import NotFound from './pages/NotFound';
 import Addresses from './pages/account/Addresses';
+
+// Interfaces for Home Page Products
+interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  price: number;
+  discountPrice?: number;
+  stock: number;
+  isFeatured?: boolean;
+  images: string[];
+  rating: number;
+  reviewCount: number;
+}
 
 // ==========================================
 // 1. SPARKLE TEXT ANIMATION
@@ -87,13 +103,10 @@ const DynamicModel = ({ url }: { url: string }) => {
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     
-    // Scale Logic
     const maxDim = Math.max(size.x, size.y, size.z);
     const scaleFactor = 3.5 / (maxDim || 1); 
     
     clone.scale.set(scaleFactor, scaleFactor, scaleFactor);
-    
-    // Center Logic (Fixes off-center models)
     clone.position.x = -center.x * scaleFactor;
     clone.position.y = -center.y * scaleFactor;
     clone.position.z = -center.z * scaleFactor;
@@ -103,7 +116,7 @@ const DynamicModel = ({ url }: { url: string }) => {
 };
 
 // ==========================================
-// 3. 3D CAROUSEL SWITCHER (FIXED POSITIONS)
+// 3. 3D CAROUSEL SWITCHER
 // ==========================================
 const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   const [index, setIndex] = useState(0);
@@ -144,7 +157,6 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   if (customModels.length === 0) return null;
 
   return (
-    // FIX: ডেস্কটপে মডেলটি ৪ ইউনিট ডানে ([4, 0, 0]) থাকবে। মোবাইলে একটু নিচে ([0, 0, 0]) থাকবে।
     <group position={isMobile ? [0, -0.5, 0] : [4, 0, 0]} scale={isMobile ? 0.8 : 1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
@@ -176,7 +188,6 @@ const InteractiveControls = () => {
       enablePan={false}  
       autoRotate={true}  
       autoRotateSpeed={1.5} 
-      // FIX: ক্যামেরার টার্গেটও মডেলের পজিশন অনুযায়ী সেট করা হলো
       target={isMobile ? [0, -0.5, 0] : [4, 0, 0]} 
       minPolarAngle={Math.PI / 3} 
       maxPolarAngle={Math.PI / 1.5} 
@@ -186,24 +197,93 @@ const InteractiveControls = () => {
 };
 
 // ==========================================
-// 5. HOME COMPONENT
+// 5. MAIN HOME COMPONENT (Fully Restored)
 // ==========================================
 const Home = () => {
   const [customModels, setCustomModels] = useState<string[]>([]);
+  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchModels = async () => {
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const q = query(collection(db, '3d_models'), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
-        const urls = snapshot.docs.map(doc => doc.data().modelUrl);
-        setCustomModels(urls);
+        // 1. Fetch 3D Models
+        const modelsQuery = query(collection(db, '3d_models'), orderBy('createdAt', 'desc'));
+        const modelsSnap = await getDocs(modelsQuery);
+        setCustomModels(modelsSnap.docs.map(doc => doc.data().modelUrl));
+
+        // 2. Fetch New Arrivals
+        const newArrQuery = query(collection(db, 'products'), orderBy('createdAt', 'desc'), limit(4));
+        const newArrSnap = await getDocs(newArrQuery);
+        setNewArrivals(newArrSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
+
+        // 3. Fetch Featured Products
+        const featuredQuery = query(collection(db, 'products'), where('isFeatured', '==', true), limit(4));
+        const featuredSnap = await getDocs(featuredQuery);
+        setFeaturedProducts(featuredSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
+
       } catch (error) {
-        console.error("Error fetching 3D models:", error);
+        console.error("Error fetching homepage data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
-    fetchModels();
+    fetchData();
   }, []);
+
+  // Reusable Product Card Component
+  const ProductCard = ({ product }: { product: Product }) => (
+    <Link to={`/product/${product.slug}`} className="group block">
+      <div className="relative aspect-[3/4] bg-gray-100 rounded-2xl overflow-hidden mb-4 shadow-sm group-hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)] transition-all duration-300">
+        {product.images && product.images.length > 0 ? (
+          <>
+            <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            {product.images[1] && (
+              <img src={product.images[1]} alt={`${product.name} alternate`} className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            )}
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-300">No Image</div>
+        )}
+        
+        <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {product.discountPrice && product.discountPrice > 0 ? (
+            <span className="bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm">Sale</span>
+          ) : null}
+          {product.isFeatured && (
+            <span className="bg-gray-900 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm">Featured</span>
+          )}
+        </div>
+        
+        <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 hidden md:block">
+          <button className="w-full bg-white/95 backdrop-blur-sm text-gray-900 py-3 rounded-xl font-bold shadow-lg hover:bg-gray-900 hover:text-white transition-colors flex items-center justify-center gap-2">
+            <ShoppingBag className="w-4 h-4" /> Quick View
+          </button>
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{product.category}</p>
+        <h3 className="text-base font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">{product.name}</h3>
+        <div className="flex items-center gap-1 mb-2">
+          <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+          <span className="text-sm font-bold text-gray-700">{product.rating || '5.0'}</span>
+          <span className="text-xs text-gray-400 font-medium">({product.reviewCount || 0})</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {product.discountPrice && product.discountPrice > 0 ? (
+            <>
+              <span className="text-lg font-black text-blue-600">${product.discountPrice.toFixed(2)}</span>
+              <span className="text-sm text-gray-400 font-bold line-through">${product.price.toFixed(2)}</span>
+            </>
+          ) : (
+            <span className="text-lg font-black text-gray-900">${product.price.toFixed(2)}</span>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
 
   return (
     <>
@@ -228,11 +308,10 @@ const Home = () => {
         }
       `}</style>
       
-      {/* FIX: মোবাইলের জন্য হাইট Auto করা হয়েছে, যাতে লেখা এবং 3D মডেল সুন্দরভাবে জায়গা পায় */}
+      {/* ================= HERO SECTION (3D) ================= */}
       <div className="relative min-h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-20 md:pb-0">
         
         <div className="absolute inset-0 z-0 pointer-events-auto">
-          {/* FIX: ডেস্কটপের জন্য fov 45 এবং মোবাইলের জন্য fov 55 (যাতে মডেল পুরো স্ক্রিনে সুন্দরভাবে ফিট হয়) */}
           <Canvas camera={{ position: [0, 0, 8], fov: window.innerWidth < 768 ? 55 : 45 }}>
             <ambientLight intensity={1.5} color="#ffffff" />
             <spotLight position={[10, 10, 10]} angle={0.2} penumbra={1} intensity={2.5} color="#ffffff" castShadow />
@@ -246,7 +325,6 @@ const Home = () => {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-16 md:pt-0">
-          {/* FIX: টেক্সট এরিয়া ডেস্কটপে বামদিকে এবং মোবাইলে ওপরে রাখা হয়েছে */}
           <div className="max-w-xl text-center md:text-left mt-0 md:mt-0 pointer-events-auto bg-white/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-6 md:p-0 rounded-3xl md:rounded-none shadow-lg md:shadow-none border border-white/50 md:border-transparent">
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
               <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-sm font-bold tracking-widest mb-6 border border-blue-200">
@@ -269,9 +347,129 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      {/* ================= TRUST INDICATORS ================= */}
+      <div className="bg-white py-12 border-b border-gray-100 relative z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x-0 md:divide-x divide-gray-100">
+            <div className="flex flex-col items-center justify-center px-4">
+              <Truck className="w-8 h-8 text-blue-600 mb-3" />
+              <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wider mb-1">Free Shipping</h3>
+              <p className="text-xs text-gray-500 font-medium">On orders over $200</p>
+            </div>
+            <div className="flex flex-col items-center justify-center px-4">
+              <ShieldCheck className="w-8 h-8 text-blue-600 mb-3" />
+              <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wider mb-1">Secure Checkout</h3>
+              <p className="text-xs text-gray-500 font-medium">100% protected payments</p>
+            </div>
+            <div className="flex flex-col items-center justify-center px-4">
+              <RotateCcw className="w-8 h-8 text-blue-600 mb-3" />
+              <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wider mb-1">Easy Returns</h3>
+              <p className="text-xs text-gray-500 font-medium">30-day return policy</p>
+            </div>
+            <div className="flex flex-col items-center justify-center px-4">
+              <Clock className="w-8 h-8 text-blue-600 mb-3" />
+              <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wider mb-1">24/7 Support</h3>
+              <p className="text-xs text-gray-500 font-medium">Always here to help</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ================= NEW ARRIVALS ================= */}
+      <div className="bg-[#F8FAFC] py-24 border-b border-gray-100 relative z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-end mb-10">
+            <div>
+              <span className="text-blue-600 font-bold tracking-widest text-sm uppercase mb-2 block">Just Dropped</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">New Arrivals</h2>
+            </div>
+            <Link to="/shop" className="hidden md:flex items-center font-bold text-gray-900 hover:text-blue-600 transition-colors group">
+              View All <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+          
+          {isLoading ? (
+            <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>
+          ) : newArrivals.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
+              {newArrivals.map(product => <ProductCard key={product.id} product={product} />)}
+            </div>
+          ) : (
+            <div className="bg-white p-10 rounded-2xl text-center border border-gray-100 shadow-sm">
+              <ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 font-bold">New collections coming soon!</p>
+            </div>
+          )}
+          
+          <Link to="/shop" className="md:hidden mt-8 w-full bg-white border border-gray-200 text-gray-900 py-4 rounded-xl font-bold hover:bg-gray-50 transition-colors flex items-center justify-center shadow-sm">
+            View All New Arrivals <ArrowRight className="w-5 h-5 ml-2" />
+          </Link>
+        </div>
+      </div>
+
+      {/* ================= CUSTOM PROMOTIONAL BANNER ================= */}
+      <div className="bg-white py-20 relative z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative rounded-3xl overflow-hidden bg-gray-900 min-h-[400px] flex flex-col md:flex-row items-center justify-center md:justify-start shadow-2xl group">
+            <img 
+              src="/my-banner.jpg" 
+              alt="Promotional Banner" 
+              className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-1000"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=2000&auto=format&fit=crop';
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
+            <div className="relative z-10 px-8 md:px-16 py-16 md:py-20 text-center md:text-left max-w-2xl">
+              <span className="text-blue-400 font-bold tracking-widest text-sm uppercase mb-3 block drop-shadow-md">Special Offer</span>
+              <h3 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight drop-shadow-lg">Summer Collection 2026</h3>
+              <p className="text-gray-200 text-lg md:text-xl mb-10 font-medium drop-shadow-md">Get ready for the season with our most vibrant and comfortable pieces yet. Up to 40% off on selected items.</p>
+              <Link to="/shop" className="inline-flex bg-white text-gray-900 px-10 py-4 rounded-full font-bold hover:bg-blue-600 hover:text-white transition-all shadow-[0_10px_30px_rgba(0,0,0,0.3)] active:scale-95 text-sm tracking-widest uppercase items-center group/btn">
+                Explore Collection
+                <ArrowRight className="w-5 h-5 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ================= FEATURED PRODUCTS ================= */}
+      <div className="bg-[#F8FAFC] py-24 border-t border-gray-100 relative z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-end mb-10">
+            <div>
+              <span className="text-blue-600 font-bold tracking-widest text-sm uppercase mb-2 block">Top Picks</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">Featured Products</h2>
+            </div>
+            <Link to="/shop" className="hidden md:flex items-center font-bold text-gray-900 hover:text-blue-600 transition-colors group">
+              View All <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+          
+          {isLoading ? (
+            <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>
+          ) : featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
+              {featuredProducts.map(product => <ProductCard key={product.id} product={product} />)}
+            </div>
+          ) : (
+            <div className="bg-white p-10 rounded-2xl text-center border border-gray-100 shadow-sm">
+              <Star className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 font-bold">Featured products will appear here.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </>
   );
 };
+
+const DummyPage = ({ title }: { title: string }) => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <h2 className="text-2xl font-semibold text-gray-700">{title} Page Coming Soon...</h2>
+  </div>
+);
 
 // ==========================================
 // MAIN APP COMPONENT
