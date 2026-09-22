@@ -141,8 +141,7 @@ const CameraController = () => {
       state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, targetX, 0.05);
       state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.05);
     }
-// ডেস্কটপে মডেল ডানদিকে এবং মোবাইলে ওপরে দেখানোর জাদুকরী লজিক
-state.camera.lookAt(isMobile ? 0 : -2, isMobile ? -2 : 0, 0);
+    state.camera.lookAt(0, 0, 0);
   });
   return null;
 };

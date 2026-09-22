@@ -33,7 +33,6 @@ import AddProduct from './pages/admin/AddProduct';
 import EditProduct from './pages/admin/EditProduct';
 import ManageOrders from './pages/admin/ManageOrders';
 import AdminLegalPages from './pages/admin/LegalPages';
-import ManageBanners from './pages/admin/ManageBanners';
 import Manage3DModels from './pages/admin/Manage3DModels';
 import ManageCategories from './pages/admin/ManageCategories';
 import AdminCustomers from './pages/admin/Customers';
@@ -102,6 +101,7 @@ const DynamicModel = ({ url }: { url: string }) => {
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     
+    // মডেলকে ফিক্সড ৩.৫ সাইজে আনা হলো
     const maxDim = Math.max(size.x, size.y, size.z);
     const scaleFactor = 3.5 / (maxDim || 1); 
     
@@ -121,13 +121,6 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   const [index, setIndex] = useState(0);
   const groupRef = useRef<THREE.Group>(null);
   const targetScale = useRef(0); 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     const initTimer = setTimeout(() => { targetScale.current = 1; }, 100);
@@ -156,9 +149,8 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   if (customModels.length === 0) return null;
 
   return (
-    // 💡 এখানেই আপনি মডেলের পজিশন পাল্টাতে পারবেন! 
-    // Desktop এ [5, 25, 0] মানে ডানদিকে। Mobile এ [0, 5, 0] মানে মাঝখানে ওপরে।
-    <group position={isMobile ? [0, 5, 0] : [5, 25, 0]} scale={isMobile ? 0.65 : 1}>
+    // মডেলকে সব ডিভাইসের জন্য একদম মাঝখানে (0,0,0) রাখা হলো
+    <group position={[0, 0, 0]} scale={1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
           <Suspense fallback={null}>
@@ -166,13 +158,14 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
           </Suspense>
         </group>
       </Float>
+      {/* ফ্লোরের শ্যাডো */}
       <ContactShadows position={[0, -2, 0]} opacity={0.4} scale={7} blur={2.5} far={2} color="#000000" />
     </group>
   );
 };
 
 // ==========================================
-// 4. INTERACTIVE 3D CONTROLS
+// 4. INTERACTIVE 3D CONTROLS & CAMERA LOGIC
 // ==========================================
 const InteractiveControls = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -183,14 +176,28 @@ const InteractiveControls = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // 💡 আসল ম্যাজিক: মডেলকে মাঝখানে রেখে ক্যামেরাকে বাঁকা করে দেওয়া হলো!
+  useFrame((state) => {
+    if (!isMobile) {
+      // ডেস্কটপে ক্যামেরা একটু বামে (-2.5) থাকবে, ফলে মডেলটি ডানদিকে দেখাবে!
+      const targetX = -2.5 + (state.pointer.x * 1);
+      const targetY = (state.pointer.y * 1);
+      state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, targetX, 0.05);
+      state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.05);
+    } else {
+      // মোবাইলে ক্যামেরা নিচে (-1.5) থাকবে, ফলে মডেলটি ওপরে দেখাবে!
+      state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, 0, 0.05);
+      state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -1.5, 0.05);
+    }
+  });
+
   return (
     <OrbitControls 
       enableZoom={false} 
       enablePan={false}  
       autoRotate={true}  
       autoRotateSpeed={1.5} 
-      // 💡 ক্যামেরার টার্গেটও মডেলের পজিশন অনুযায়ী সেট করতে হয়।
-      target={isMobile ? [0, 5, 0] : [5, 25, 0]} 
+      target={[0, 0, 0]} // মডেল যেহেতু 0,0,0 তে আছে, তাই টার্গেটও 0,0,0
       minPolarAngle={Math.PI / 3} 
       maxPolarAngle={Math.PI / 1.5} 
       makeDefault
@@ -306,13 +313,11 @@ const Home = () => {
         }
       `}</style>
       
-      {/* ================= HERO SECTION ================= */}
-      {/* 💡 FIX: মোবাইলের জন্য 'flex-col' দেওয়া হয়েছে, যাতে 3D মডেল ওপরে থাকে এবং টেক্সট নিচে যায় */}
-      <div className="relative min-h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-16 md:pb-0 pt-4 md:pt-0">
+      <div className="relative min-h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-20 md:pb-0">
         
-        {/* 3D CANVAS BACKGROUND */}
-        <div className="absolute inset-0 z-0 pointer-events-auto h-full">
-          <Canvas camera={{ position: [0, 0, 8], fov: window.innerWidth < 768 ? 55 : 45 }}>
+        <div className="absolute inset-0 z-0 pointer-events-auto">
+          {/* fov 45 ফিক্স রাখা হয়েছে যাতে মডেল ছোট না হয় */}
+          <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
             <ambientLight intensity={1.5} color="#ffffff" />
             <spotLight position={[10, 10, 10]} angle={0.2} penumbra={1} intensity={2.5} color="#ffffff" castShadow />
             <directionalLight position={[-10, -10, -5]} intensity={1.5} color="#e2e8f0" />
@@ -324,34 +329,26 @@ const Home = () => {
           </Canvas>
         </div>
 
-        {/* FOREGROUND UI OVERLAY */}
-        {/* 💡 FIX: মোবাইলে টেক্সট এরিয়া নিচে নামানোর জন্য 'mt-auto' এবং 'pb-4' ব্যবহার করা হয়েছে */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-64 md:pt-0 mt-auto md:mt-0 pb-4 md:pb-0">
-          
-          <div className="max-w-xl text-center md:text-left pointer-events-auto bg-white/70 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-6 md:p-0 rounded-[2rem] md:rounded-none shadow-xl md:shadow-none border border-white/50 md:border-transparent mt-[40vh] md:mt-0">
-            
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-10 md:pt-0">
+          <div className="max-w-xl text-center md:text-left mt-auto md:mt-0 pointer-events-auto bg-white/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-6 md:p-0 rounded-3xl md:rounded-none shadow-lg md:shadow-none border border-white/50 md:border-transparent">
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
-              <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-sm font-bold tracking-widest mb-4 border border-blue-200 shadow-sm">
+              <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-sm font-bold tracking-widest mb-6 border border-blue-200">
                 PREMIUM COLLECTION
               </span>
             </div>
-            
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-gray-900 mb-4 md:mb-6 tracking-tight leading-[1.1] flex flex-wrap justify-center md:justify-start gap-x-3 pointer-events-none">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-gray-900 mb-6 tracking-tight leading-[1.1] flex flex-wrap justify-center md:justify-start gap-x-3 pointer-events-none">
               <SparkleText text="Elevate" delayOffset={0.2} />
               <SparkleText text="Your" delayOffset={0.8} />
               <SparkleText text="Style" delayOffset={1.4} className="text-blue-600" />
             </h1>
-            
-            <p className="text-gray-700 text-base md:text-xl mb-8 max-w-md mx-auto md:mx-0 leading-relaxed font-medium bg-transparent md:bg-white/40 md:p-4 rounded-2xl md:backdrop-blur-sm md:border md:border-white/60 md:shadow-sm animate-fade-in-up" style={{ animationDelay: '1.8s', opacity: 0 }}>
+            <p className="text-gray-600 text-base md:text-xl mb-10 max-w-md mx-auto md:mx-0 leading-relaxed font-medium bg-transparent md:bg-white/40 md:p-4 rounded-2xl md:backdrop-blur-sm md:border md:border-white/60 md:shadow-sm animate-fade-in-up" style={{ animationDelay: '1.8s', opacity: 0 }}>
               Discover our exclusive interactive collection. Drag to rotate and explore premium luxury from every angle.
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start animate-fade-in-up" style={{ animationDelay: '2.0s', opacity: 0 }}>
+            <div className="flex flex-col sm:flex-row gap-5 justify-center md:justify-start animate-fade-in-up" style={{ animationDelay: '2.0s', opacity: 0 }}>
               <Link to="/shop" className="bg-gray-900 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-600 transition-all flex items-center justify-center text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.1)] active:scale-95 group">
                 Shop Now <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-2 transition-transform" />
               </Link>
             </div>
-
           </div>
         </div>
       </div>
@@ -468,6 +465,12 @@ const Home = () => {
     </>
   );
 };
+
+const DummyPage = ({ title }: { title: string }) => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <h2 className="text-2xl font-semibold text-gray-700">{title} Page Coming Soon...</h2>
+  </div>
+);
 
 // ==========================================
 // MAIN APP COMPONENT
