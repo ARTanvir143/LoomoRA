@@ -156,8 +156,8 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   if (customModels.length === 0) return null;
 
   return (
-    // 💡 FIX: মোবাইলে মডেলটি একদম মাঝখানে (0,0,0) থাকবে, কারণ ক্যানভাস সাইজ ছোট করা হয়েছে।
-    <group position={isMobile ? [0, 0, 0] : [5.5, 0, 0]} scale={isMobile ? 2 : 1}>
+    // 💡 FIX: ডেস্কটপে ডানদিকে [2.8, -0.5, 0] এবং মোবাইলে মাঝখানে [0, 0, 0]
+    <group position={isMobile ? [0, 0, 0] : [2.8, -0.5, 0]} scale={isMobile ? 0.8 : 1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
           <Suspense fallback={null}>
@@ -165,7 +165,7 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
           </Suspense>
         </group>
       </Float>
-      <ContactShadows position={[0, -1.8, 0]} opacity={0.4} scale={7} blur={2.5} far={2} color="#000000" />
+      <ContactShadows position={[0, -2, 0]} opacity={0.4} scale={7} blur={2.5} far={2} color="#000000" />
     </group>
   );
 };
@@ -184,10 +184,13 @@ const InteractiveControls = () => {
 
   useFrame((state) => {
     if (!isMobile) {
-      const targetX = -4.5 + (state.pointer.x * 2);
-      const targetY = (state.pointer.y * 1);
-      state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, targetX, 0.05);
-      state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.05);
+      // 💡 FIX: কোনো এক্সট্রিম অফসেট নেই, শুধু মাউসের সাথে হালকা মুভ করবে
+      state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, state.pointer.x * 1, 0.05);
+      state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, state.pointer.y * 1, 0.05);
+    } else {
+      // মোবাইলে ক্যামেরা একটু নিচে থাকবে, যাতে মডেল ওপরে দেখায়
+      state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, 0, 0.05);
+      state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -1.5, 0.05);
     }
   });
 
@@ -197,7 +200,8 @@ const InteractiveControls = () => {
       enablePan={false}  
       autoRotate={true}  
       autoRotateSpeed={1.5} 
-      target={isMobile ? [0, 0, 0] : [5.5, 0, 0]} 
+      // 💡 FIX: টার্গেট ঠিক মডেলের পজিশনে সেট করা হলো
+      target={isMobile ? [0, 0, 0] : [2.8, -0.5, 0]} 
       minPolarAngle={Math.PI / 3} 
       maxPolarAngle={Math.PI / 1.5} 
       minDistance={8} 
@@ -320,13 +324,11 @@ const Home = () => {
         }
       `}</style>
       
-      {/* 💡 FIX: Flex-col used properly. Height is full on desktop, but dynamic on mobile. */}
-      <div className="relative min-h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center justify-center cursor-grab active:cursor-grabbing pb-10 md:pb-0">
+      <div className="prevent-scroll-zoom relative min-h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-20 md:pb-0">
         
-        {/* ================= 3D CANVAS ================= */}
-        {/* 💡 FIX: On mobile, Canvas takes 50vh at the TOP. On desktop, it takes absolute full screen. */}
-        <div className="prevent-scroll-zoom w-full h-[50vh] md:absolute md:inset-0 md:h-full z-0 pointer-events-auto">
-          <Canvas camera={{ position: [0, 0, 8], fov: window.innerWidth < 768 ? 60 : 45 }}>
+        <div className="absolute inset-0 z-0 pointer-events-auto">
+          {/* fov 45 ফিক্স রাখা হয়েছে যাতে মডেল ছোট না হয় */}
+          <Canvas camera={{ position: [0, 0, 8], fov: window.innerWidth < 768 ? 55 : 45 }}>
             <ambientLight intensity={1.5} color="#ffffff" />
             <spotLight position={[10, 10, 10]} angle={0.2} penumbra={1} intensity={2.5} color="#ffffff" castShadow />
             <directionalLight position={[-10, -10, -5]} intensity={1.5} color="#e2e8f0" />
@@ -338,18 +340,12 @@ const Home = () => {
           </Canvas>
         </div>
 
-        {/* ================= FOREGROUND UI ================= */}
-        {/* 💡 FIX: On mobile, Text comes sequentially BELOW the 3D model. */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-8 md:pt-0 pb-12 md:pb-0">
-          
-          {/* 💡 FIX: Glassmorphism added for both Mobile and Desktop */}
-          <div className="max-w-xl text-center md:text-left pointer-events-auto bg-white/30 backdrop-blur-xl p-8 md:p-12 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/40 relative overflow-hidden">
-            
-            {/* Subtle inner reflection for realistic glass effect */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-10 md:pt-0 pb-12 md:pb-0">
+          <div className="max-w-xl text-center md:text-left pointer-events-auto bg-white/30 backdrop-blur-xl p-8 md:p-12 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/40 relative overflow-hidden mt-auto md:mt-0">
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"></div>
             
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
-              <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-xs md:text-sm font-bold tracking-widest mb-4 border border-blue-200 shadow-sm">
+              <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-sm font-bold tracking-widest mb-6 border border-blue-200 shadow-sm">
                 PREMIUM COLLECTION
               </span>
             </div>
@@ -360,7 +356,7 @@ const Home = () => {
               <SparkleText text="Style" delayOffset={1.4} className="text-blue-600" />
             </h1>
             
-            <p className="text-gray-600 text-sm sm:text-base md:text-xl mb-8 max-w-md mx-auto md:mx-0 leading-relaxed font-medium md:bg-white/40 md:p-4 md:rounded-2xl md:backdrop-blur-sm md:border md:border-white/60 md:shadow-sm animate-fade-in-up" style={{ animationDelay: '1.8s', opacity: 0 }}>
+            <p className="text-gray-700 text-base md:text-xl mb-8 max-w-md mx-auto md:mx-0 leading-relaxed font-medium animate-fade-in-up" style={{ animationDelay: '1.8s', opacity: 0 }}>
               Discover our exclusive interactive collection. Drag to rotate and explore premium luxury from every angle.
             </p>
             
@@ -485,6 +481,12 @@ const Home = () => {
     </>
   );
 };
+
+const DummyPage = ({ title }: { title: string }) => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <h2 className="text-2xl font-semibold text-gray-700">{title} Page Coming Soon...</h2>
+  </div>
+);
 
 // ==========================================
 // MAIN APP COMPONENT
