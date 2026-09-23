@@ -184,7 +184,7 @@ const InteractiveControls = () => {
 
   useFrame((state) => {
     if (!isMobile) {
-      const targetX = -2.5 + (state.pointer.x * 2);
+      const targetX = -4.5 + (state.pointer.x * 2);
       const targetY = (state.pointer.y * 1);
       state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, targetX, 0.05);
       state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.05);
