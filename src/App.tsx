@@ -165,7 +165,7 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
           </Suspense>
         </group>
       </Float>
-      <ContactShadows position={[0, -2, 0]} opacity={0.4} scale={7} blur={2.5} far={2} color="#000000" />
+      <ContactShadows position={[0, 0, 0]} opacity={0.4} scale={7} blur={2.5} far={2} color="#000000" />
     </group>
   );
 };
@@ -340,9 +340,13 @@ const Home = () => {
 
         {/* ================= FOREGROUND UI ================= */}
         {/* 💡 FIX: On mobile, Text comes sequentially BELOW the 3D model. */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex flex-col md:flex-row items-center md:items-center justify-center md:justify-start h-auto md:h-full pt-8 md:pt-0">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-8 md:pt-0 pb-12 md:pb-0">
           
-          <div className="max-w-xl text-center md:text-left pointer-events-auto bg-transparent md:bg-transparent p-0 md:p-0 rounded-none md:rounded-none shadow-none md:shadow-none border-transparent md:border-transparent">
+          {/* 💡 FIX: Glassmorphism added for both Mobile and Desktop */}
+          <div className="max-w-xl text-center md:text-left pointer-events-auto bg-white/30 backdrop-blur-xl p-8 md:p-12 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/40 relative overflow-hidden">
+            
+            {/* Subtle inner reflection for realistic glass effect */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"></div>
             
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
               <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-xs md:text-sm font-bold tracking-widest mb-4 border border-blue-200 shadow-sm">
