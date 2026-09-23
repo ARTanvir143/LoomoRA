@@ -157,7 +157,7 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
 
   return (
     // 💡 FIX: মোবাইলে মডেলটি একদম মাঝখানে (0,0,0) থাকবে, কারণ ক্যানভাস সাইজ ছোট করা হয়েছে।
-    <group position={isMobile ? [0, 0, 0] : [3.5, 0, 0]} scale={isMobile ? 0.8 : 1}>
+    <group position={isMobile ? [0, 0, 0] : [3.5, 0, 0]} scale={isMobile ? 2 : 1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
           <Suspense fallback={null}>
