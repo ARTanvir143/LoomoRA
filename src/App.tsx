@@ -156,8 +156,8 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   if (customModels.length === 0) return null;
 
   return (
-    // 💡 FIX: ডেস্কটপে ডানদিকে [2.8, -0.5, 0] এবং মোবাইলে মাঝখানে [0, 0, 0]
-    <group position={isMobile ? [0, 0, 0] : [2.8, -0.5, 0]} scale={isMobile ? 0.8 : 1}>
+    // 💡 FIX: ডেস্কটপে মডেলটিকে আরও ডানদিকে (X=6) সরিয়ে দেওয়া হলো। মোবাইলে মাঝখানে ওপরে (Y=1.5)।
+    <group position={isMobile ? [0, 1.5, 0] : [6, 0, 0]} scale={isMobile ? 0.7 : 1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
           <Suspense fallback={null}>
@@ -184,13 +184,11 @@ const InteractiveControls = () => {
 
   useFrame((state) => {
     if (!isMobile) {
-      // 💡 FIX: কোনো এক্সট্রিম অফসেট নেই, শুধু মাউসের সাথে হালকা মুভ করবে
-      state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, state.pointer.x * 1, 0.05);
-      state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, state.pointer.y * 1, 0.05);
-    } else {
-      // মোবাইলে ক্যামেরা একটু নিচে থাকবে, যাতে মডেল ওপরে দেখায়
-      state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, 0, 0.05);
-      state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -1.5, 0.05);
+      // ডেস্কটপে ক্যামেরা হালকা মুভ করবে প্যারালাক্সের জন্য
+      const targetX = -1 + (state.pointer.x * 1.5);
+      const targetY = (state.pointer.y * 1);
+      state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, targetX, 0.05);
+      state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.05);
     }
   });
 
@@ -200,8 +198,7 @@ const InteractiveControls = () => {
       enablePan={false}  
       autoRotate={true}  
       autoRotateSpeed={1.5} 
-      // 💡 FIX: টার্গেট ঠিক মডেলের পজিশনে সেট করা হলো
-      target={isMobile ? [0, 0, 0] : [2.8, -0.5, 0]} 
+      target={isMobile ? [0, 1.5, 0] : [6, 0, 0]} // টার্গেটও ডানদিকে সরিয়ে দেওয়া হলো
       minPolarAngle={Math.PI / 3} 
       maxPolarAngle={Math.PI / 1.5} 
       minDistance={8} 
@@ -324,10 +321,11 @@ const Home = () => {
         }
       `}</style>
       
-      <div className="prevent-scroll-zoom relative min-h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-20 md:pb-0">
+      {/* 💡 FIX: মোবাইলের জন্য 'flex-col' (ওপর-নিচ) এবং ডেস্কটপের জন্য 'flex-row' (পাশাপাশি) লেআউট */}
+      <div className="prevent-scroll-zoom relative min-h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-16 md:pb-0 pt-4 md:pt-0">
         
-        <div className="absolute inset-0 z-0 pointer-events-auto">
-          {/* fov 45 ফিক্স রাখা হয়েছে যাতে মডেল ছোট না হয় */}
+        {/* ================= 3D CANVAS ================= */}
+        <div className="absolute inset-0 z-0 pointer-events-auto h-full w-full">
           <Canvas camera={{ position: [0, 0, 8], fov: window.innerWidth < 768 ? 55 : 45 }}>
             <ambientLight intensity={1.5} color="#ffffff" />
             <spotLight position={[10, 10, 10]} angle={0.2} penumbra={1} intensity={2.5} color="#ffffff" castShadow />
@@ -340,12 +338,15 @@ const Home = () => {
           </Canvas>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-10 md:pt-0 pb-12 md:pb-0">
-          <div className="max-w-xl text-center md:text-left pointer-events-auto bg-white/30 backdrop-blur-xl p-8 md:p-12 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/40 relative overflow-hidden mt-auto md:mt-0">
+        {/* ================= FOREGROUND UI OVERLAY ================= */}
+        {/* 💡 FIX: ডেস্কটপে টেক্সট বক্সকে বাম দিকে (justify-start) এবং মোবাইলে নিচে (mt-auto) রাখা হয়েছে */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-64 md:pt-0 mt-auto md:mt-0 pb-4 md:pb-0">
+          
+          <div className="max-w-xl text-center md:text-left pointer-events-auto bg-white/30 backdrop-blur-xl p-8 md:p-12 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/40 relative overflow-hidden mt-[40vh] md:mt-0">
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"></div>
             
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
-              <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-sm font-bold tracking-widest mb-6 border border-blue-200 shadow-sm">
+              <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-xs md:text-sm font-bold tracking-widest mb-6 border border-blue-200 shadow-sm">
                 PREMIUM COLLECTION
               </span>
             </div>
