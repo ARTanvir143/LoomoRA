@@ -157,7 +157,7 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
 
   return (
     // 💡 FIX: মোবাইলে মডেলটি একদম মাঝখানে (0,0,0) থাকবে, কারণ ক্যানভাস সাইজ ছোট করা হয়েছে।
-    <group position={isMobile ? [0, 0, 0] : [5, 0, 0]} scale={isMobile ? 2 : 1}>
+    <group position={isMobile ? [0, 0, 0] : [15, 0, 0]} scale={isMobile ? 2 : 1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
           <Suspense fallback={null}>
@@ -197,7 +197,7 @@ const InteractiveControls = () => {
       enablePan={false}  
       autoRotate={true}  
       autoRotateSpeed={1.5} 
-      target={isMobile ? [0, 0, 0] : [5, 0, 0]} 
+      target={isMobile ? [0, 0, 0] : [15, 0, 0]} 
       minPolarAngle={Math.PI / 3} 
       maxPolarAngle={Math.PI / 1.5} 
       minDistance={8} 
