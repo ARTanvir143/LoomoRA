@@ -35,7 +35,7 @@ import ManageOrders from './pages/admin/ManageOrders';
 import AdminLegalPages from './pages/admin/LegalPages';
 import Manage3DModels from './pages/admin/Manage3DModels';
 import ManageCategories from './pages/admin/ManageCategories';
-import ManageBanners from './pages/admin/ManageBanners'; // 💡 FIXED: IMPORT ADDED HERE!
+import ManageBanners from './pages/admin/ManageBanners';
 import AdminCustomers from './pages/admin/Customers';
 import AdminSettings from './pages/admin/Settings';
 import Shop from './pages/shop/Shop';
@@ -121,6 +121,13 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   const [index, setIndex] = useState(0);
   const groupRef = useRef<THREE.Group>(null);
   const targetScale = useRef(0); 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const initTimer = setTimeout(() => { targetScale.current = 1; }, 100);
@@ -149,8 +156,8 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
   if (customModels.length === 0) return null;
 
   return (
-    // মডেলকে সব ডিভাইসের জন্য একদম মাঝখানে (0,0,0) রাখা হলো
-    <group position={[0, 0, 0]} scale={1}>
+    // 💡 FIX: মোবাইলে মডেলটি একদম মাঝখানে (0,0,0) থাকবে, কারণ ক্যানভাস সাইজ ছোট করা হয়েছে।
+    <group position={isMobile ? [0, 0, 0] : [3.5, 0, 0]} scale={isMobile ? 0.8 : 1}>
       <Float speed={2} floatIntensity={0.5} rotationIntensity={0.1}>
         <group ref={groupRef} scale={0}>
           <Suspense fallback={null}>
@@ -158,14 +165,13 @@ const FashionCarousel = ({ customModels }: { customModels: string[] }) => {
           </Suspense>
         </group>
       </Float>
-      {/* ফ্লোরের শ্যাডো */}
       <ContactShadows position={[0, -2, 0]} opacity={0.4} scale={7} blur={2.5} far={2} color="#000000" />
     </group>
   );
 };
 
 // ==========================================
-// 4. INTERACTIVE 3D CONTROLS (ZOOM COMPLETELY LOCKED)
+// 4. INTERACTIVE 3D CONTROLS
 // ==========================================
 const InteractiveControls = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -178,29 +184,24 @@ const InteractiveControls = () => {
 
   useFrame((state) => {
     if (!isMobile) {
-      // ডেস্কটপে ক্যামেরা একটু বামে (-2.5) থাকবে, ফলে মডেলটি ডানদিকে দেখাবে!
       const targetX = -2.5 + (state.pointer.x * 1);
       const targetY = (state.pointer.y * 1);
       state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, targetX, 0.05);
       state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.05);
-    } else {
-      // মোবাইলে ক্যামেরা নিচে (-1.5) থাকবে, ফলে মডেলটি ওপরে দেখাবে!
-      state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, 0, 0.05);
-      state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, -1.5, 0.05);
     }
   });
 
   return (
     <OrbitControls 
-      enableZoom={false} // Strict No Zoom
-      enablePan={false}  // Strict No Pan
+      enableZoom={false} 
+      enablePan={false}  
       autoRotate={true}  
       autoRotateSpeed={1.5} 
-      target={[0, 0, 0]} 
+      target={isMobile ? [0, 0, 0] : [3.5, 0, 0]} 
       minPolarAngle={Math.PI / 3} 
       maxPolarAngle={Math.PI / 1.5} 
-      minDistance={8} // 💡 FIX: ক্যামেরা কোনোভাবেই কাছে আসতে পারবে না (Zoom in lock)
-      maxDistance={8} // 💡 FIX: ক্যামেরা কোনোভাবেই দূরে যেতে পারবে না (Zoom out lock)
+      minDistance={8} 
+      maxDistance={8} 
       makeDefault
     />
   );
@@ -313,18 +314,19 @@ const Home = () => {
           animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* 💡 FIX: This CSS completely prevents the canvas from capturing scroll/zoom events on mobile */
         .prevent-scroll-zoom canvas {
           touch-action: pan-y !important;
           overscroll-behavior: none !important;
         }
       `}</style>
       
-      <div className="prevent-scroll-zoom relative min-h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center cursor-grab active:cursor-grabbing pb-20 md:pb-0">
+      {/* 💡 FIX: Flex-col used properly. Height is full on desktop, but dynamic on mobile. */}
+      <div className="relative min-h-[calc(100vh-80px)] w-full bg-[#f8fafc] overflow-hidden flex flex-col md:flex-row items-center justify-center cursor-grab active:cursor-grabbing pb-10 md:pb-0">
         
-        <div className="absolute inset-0 z-0 pointer-events-auto">
-          {/* fov 45 ফিক্স রাখা হয়েছে যাতে মডেল ছোট না হয় */}
-          <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+        {/* ================= 3D CANVAS ================= */}
+        {/* 💡 FIX: On mobile, Canvas takes 50vh at the TOP. On desktop, it takes absolute full screen. */}
+        <div className="prevent-scroll-zoom w-full h-[50vh] md:absolute md:inset-0 md:h-full z-0 pointer-events-auto">
+          <Canvas camera={{ position: [0, 0, 8], fov: window.innerWidth < 768 ? 60 : 45 }}>
             <ambientLight intensity={1.5} color="#ffffff" />
             <spotLight position={[10, 10, 10]} angle={0.2} penumbra={1} intensity={2.5} color="#ffffff" castShadow />
             <directionalLight position={[-10, -10, -5]} intensity={1.5} color="#e2e8f0" />
@@ -336,23 +338,30 @@ const Home = () => {
           </Canvas>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-10 md:pt-0">
-          <div className="max-w-xl text-center md:text-left mt-auto md:mt-0 pointer-events-auto bg-white/40 md:bg-transparent backdrop-blur-md md:backdrop-blur-none p-6 md:p-0 rounded-3xl md:rounded-none shadow-lg md:shadow-none border border-white/50 md:border-transparent">
+        {/* ================= FOREGROUND UI ================= */}
+        {/* 💡 FIX: On mobile, Text comes sequentially BELOW the 3D model. */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex flex-col md:flex-row items-center md:items-center justify-center md:justify-start h-auto md:h-full pt-8 md:pt-0">
+          
+          <div className="max-w-xl text-center md:text-left pointer-events-auto bg-transparent md:bg-transparent p-0 md:p-0 rounded-none md:rounded-none shadow-none md:shadow-none border-transparent md:border-transparent">
+            
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
-              <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-sm font-bold tracking-widest mb-6 border border-blue-200">
+              <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100/80 backdrop-blur-md text-blue-700 text-xs md:text-sm font-bold tracking-widest mb-4 border border-blue-200 shadow-sm">
                 PREMIUM COLLECTION
               </span>
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-gray-900 mb-6 tracking-tight leading-[1.1] flex flex-wrap justify-center md:justify-start gap-x-3 pointer-events-none">
+            
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-gray-900 mb-4 md:mb-6 tracking-tight leading-[1.1] flex flex-wrap justify-center md:justify-start gap-x-3 pointer-events-none">
               <SparkleText text="Elevate" delayOffset={0.2} />
               <SparkleText text="Your" delayOffset={0.8} />
               <SparkleText text="Style" delayOffset={1.4} className="text-blue-600" />
             </h1>
-            <p className="text-gray-600 text-base md:text-xl mb-10 max-w-md mx-auto md:mx-0 leading-relaxed font-medium bg-transparent md:bg-white/40 md:p-4 rounded-2xl md:backdrop-blur-sm md:border md:border-white/60 md:shadow-sm animate-fade-in-up" style={{ animationDelay: '1.8s', opacity: 0 }}>
+            
+            <p className="text-gray-600 text-sm sm:text-base md:text-xl mb-8 max-w-md mx-auto md:mx-0 leading-relaxed font-medium md:bg-white/40 md:p-4 md:rounded-2xl md:backdrop-blur-sm md:border md:border-white/60 md:shadow-sm animate-fade-in-up" style={{ animationDelay: '1.8s', opacity: 0 }}>
               Discover our exclusive interactive collection. Drag to rotate and explore premium luxury from every angle.
             </p>
-            <div className="flex flex-col sm:flex-row gap-5 justify-center md:justify-start animate-fade-in-up" style={{ animationDelay: '2.0s', opacity: 0 }}>
-              <Link to="/shop" className="bg-gray-900 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-600 transition-all flex items-center justify-center text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.1)] active:scale-95 group">
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start animate-fade-in-up" style={{ animationDelay: '2.0s', opacity: 0 }}>
+              <Link to="/shop" className="bg-gray-900 text-white px-8 py-3.5 md:py-4 rounded-xl font-bold hover:bg-blue-600 transition-all flex items-center justify-center text-sm tracking-widest uppercase shadow-[0_10px_20px_rgba(0,0,0,0.1)] active:scale-95 group">
                 Shop Now <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-2 transition-transform" />
               </Link>
             </div>
@@ -472,12 +481,6 @@ const Home = () => {
     </>
   );
 };
-
-const DummyPage = ({ title }: { title: string }) => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <h2 className="text-2xl font-semibold text-gray-700">{title} Page Coming Soon...</h2>
-  </div>
-);
 
 // ==========================================
 // MAIN APP COMPONENT
