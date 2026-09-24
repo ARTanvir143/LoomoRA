@@ -343,7 +343,7 @@ const Home = () => {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pointer-events-none flex items-center justify-center md:justify-start h-full pt-8 md:pt-0 pb-12 md:pb-0">
           
           {/* 💡 FIX: Glassmorphism added for both Mobile and Desktop */}
-          <div className="max-w-xl text-center md:text-left mt-1 md:mt-0 pointer-events-auto bg-white/30 backdrop-blur-xl p-8 md:p-12 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/40 relative overflow-hidden">
+          <div className="max-w-xl text-center md:text-left mt-0 md:mt-0 pointer-events-auto bg-white/30 backdrop-blur-xl p-8 md:p-12 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/40 relative overflow-hidden">
             
             {/* Subtle inner reflection for realistic glass effect */}
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"></div>
